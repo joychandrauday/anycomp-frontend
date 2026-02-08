@@ -85,7 +85,7 @@ export const MultiStepEditDrawer: React.FC<MultiStepEditDrawerProps> = ({
     secretaries,
     onUpdate,
 }) => {
-    console.log(secretaries);
+    // console.log(secretaries);
     const [form] = Form.useForm();
     const [currentStep, setCurrentStep] = useState<number>(0);
     const [submitting, setSubmitting] = useState<boolean>(false);
@@ -405,7 +405,7 @@ export const MultiStepEditDrawer: React.FC<MultiStepEditDrawerProps> = ({
 
             try {
                 // Use direct fetch
-                const response = await fetch(`${BACKEND_URL}/specialists/${record.id}`, {
+                const response = await fetch(`${BACKEND_URL}/specialists/${record.slug}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -428,9 +428,9 @@ export const MultiStepEditDrawer: React.FC<MultiStepEditDrawerProps> = ({
                 onClose();
 
                 // Also call the onUpdate callback if provided
-                if (onUpdate) {
-                    await onUpdate(record.id, cleanValues);
-                }
+                // if (onUpdate) {
+                //     await onUpdate(record.id, cleanValues);
+                // }
             } catch (error) {
                 console.error("=== UPDATE ERROR DETAILS ===", error);
                 message.error(error instanceof Error ? error.message : "Failed to update service.");
@@ -511,23 +511,60 @@ export const MultiStepEditDrawer: React.FC<MultiStepEditDrawerProps> = ({
         return e?.fileList;
     };
 
-    const UploadSlot = ({ name, label }: { name: string, label: string }) => (
+    const UploadSlot = ({
+        name,
+        label,
+        isMain = false,
+    }: {
+        name: string;
+        label: string;
+        isMain?: boolean;
+    }) => (
         <Form.Item
             name={name}
-            label={label}
             valuePropName="fileList"
             getValueFromEvent={normFile}
             className="mb-6"
         >
-            <Upload.Dragger {...customRequestProps(name)} height={120} style={{ padding: '20px' }}>
-                <p className="ant-upload-drag-icon">
-                    <InboxOutlined className="text-blue-500" />
-                </p>
-                <p className="ant-upload-text text-sm">Drag & Drop or Click to Upload</p>
-                <p className="ant-upload-hint text-xs text-gray-400">JPG, PNG or WEBP (Max 4MB)</p>
-            </Upload.Dragger>
+            <div
+                className={`rounded-lg border bg-white p-4 transition
+        ${isMain ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}
+      `}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                    <div>
+                        <p className="text-sm font-semibold text-gray-800">
+                            {label}
+                        </p>
+                        {isMain && (
+                            <span className="text-[10px] uppercase bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                Primary Image
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Upload Area */}
+                <Upload.Dragger
+                    {...customRequestProps(name)}
+                    height={isMain ? 200 : 120}
+                    className="rounded-md"
+                >
+                    <p className="ant-upload-drag-icon">
+                        <InboxOutlined className="text-blue-500 text-2xl" />
+                    </p>
+                    <p className="ant-upload-text text-sm font-medium">
+                        Drag & drop or click to upload
+                    </p>
+                    <p className="ant-upload-hint text-xs text-gray-400">
+                        JPG, PNG or WEBP • Max 4MB
+                    </p>
+                </Upload.Dragger>
+            </div>
         </Form.Item>
     );
+
 
     // Helper function to get preview image URL
     const getPreviewImageUrl = (fieldName: string): string => {
@@ -647,7 +684,7 @@ export const MultiStepEditDrawer: React.FC<MultiStepEditDrawerProps> = ({
                                     {ADDITIONAL_OFFERINGS.map((offer) => (
                                         <Col span={24} key={offer.value}>
                                             <Card size="small" className="hover:border-blue-400" bodyStyle={{ padding: '12px' }}>
-                                                <Checkbox value={offer.value} className="w-full">
+                                                <Checkbox value={offer.label} className="w-full">
                                                     {offer.label}
                                                 </Checkbox>
                                             </Card>
@@ -806,16 +843,26 @@ export const MultiStepEditDrawer: React.FC<MultiStepEditDrawerProps> = ({
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 p-4 rounded-lg border">
-                            <h4 className="font-bold border-b pb-2 mb-3">Service Images</h4>
-                            <div className="flex gap-3 flex-wrap">
+                        <div className="bg-gray-50 p-5 rounded-lg border">
+                            <h4 className="font-semibold border-b pb-2 mb-4">Service Images</h4>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {['image_1', 'image_2', 'image_3'].map((fieldName, idx) => {
                                     const previewUrl = getPreviewImageUrl(fieldName);
-                                    const label = idx === 0 ? 'Main Image' : `Image ${idx + 1}`;
+                                    const isMain = idx === 0;
+                                    const label = isMain ? 'Main Image' : `Image ${idx + 1}`;
 
                                     return (
-                                        <div key={fieldName} className="flex flex-col items-center">
-                                            <div className="w-28 h-28 bg-white border border-gray-300 flex items-center justify-center rounded-md overflow-hidden mb-1">
+                                        <div
+                                            key={fieldName}
+                                            className={`flex flex-col items-center rounded-lg border bg-white p-3
+            ${isMain ? 'sm:col-span-3 border-blue-300' : 'border-gray-200'}
+          `}
+                                        >
+                                            <div
+                                                className={`w-full ${isMain ? 'h-56' : 'h-32'
+                                                    } flex items-center justify-center rounded-md overflow-hidden bg-gray-100`}
+                                            >
                                                 {previewUrl ? (
                                                     <Image
                                                         src={previewUrl}
@@ -824,15 +871,26 @@ export const MultiStepEditDrawer: React.FC<MultiStepEditDrawerProps> = ({
                                                         preview={false}
                                                     />
                                                 ) : (
-                                                    <span className="text-xs text-gray-400">No Image</span>
+                                                    <span className="text-sm text-gray-400">No image uploaded</span>
                                                 )}
                                             </div>
-                                            <span className="text-xs text-gray-500">{label}</span>
+
+                                            <div className="mt-2 text-center">
+                                                <span className="text-xs font-medium text-gray-600">
+                                                    {label}
+                                                </span>
+                                                {isMain && (
+                                                    <span className="ml-2 text-[10px] uppercase bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                                        Primary
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })}
                             </div>
                         </div>
+
                     </div>
                 );
 

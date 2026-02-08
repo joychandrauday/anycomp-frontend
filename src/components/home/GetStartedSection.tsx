@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { Box, Typography, Container, Stack } from '@mui/material';
 import { motion } from 'framer-motion';
 import { UserCheck, CreditCard, Sparkles, Clock, LayoutDashboard } from 'lucide-react';
-import SecretaryCard from '../secretary/SecretaryCard';
-import { ISecretary } from '@/types';
+import { Specialist } from '@/types/specialists';
+import SpecialistCard from '../Specialist/SpecialistCard';
 
 const steps = [
     { title: 'Appoint Secretary', desc: 'Appoint Your Company Secretary', icon: <UserCheck size={20} /> },
@@ -32,6 +32,7 @@ const InteractiveStep = ({ step, index, hoveredIndex, setHoveredIndex }: any) =>
                     scale: isHovered ? 1.05 : 1
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className='group'
             >
                 <Stack spacing={2} alignItems={{ xs: 'center', md: 'flex-start' }} textAlign={{ xs: 'center', md: 'left' }}>
                     {/* Icon Node */}
@@ -44,7 +45,7 @@ const InteractiveStep = ({ step, index, hoveredIndex, setHoveredIndex }: any) =>
                             justifyContent: 'center',
                             borderRadius: '12px',
                             bgcolor: isHovered ? 'primary.main' : '#f8fafc',
-                            color: isHovered ? '#fff' : 'text.secondary',
+                            color: isHovered ? '#fff' : '#d2d2d2',
                             border: '1px solid',
                             borderColor: isHovered ? 'primary.main' : '#e2e8f0',
                             transition: 'background-color 0.3s, color 0.3s',
@@ -58,25 +59,24 @@ const InteractiveStep = ({ step, index, hoveredIndex, setHoveredIndex }: any) =>
                         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
                             {step.title}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.5, maxWidth: 180 }}>
+                        <Typography variant="caption" sx={{ color: '#d2d2d2', display: 'block', lineHeight: 1.5, maxWidth: 180 }} className='group-hover:text-[#000000]'>
                             {step.desc}
                         </Typography>
                     </Box>
                 </Stack>
             </motion.div>
-        </Box>
+        </Box >
     );
 };
 
 const GetStartedSection = ({ data }: any) => {
     const [hoveredIndex, setHoveredIndex] = useState(null);
-    // console.log(data);
 
     return (
         <Box sx={{ py: 12, bgcolor: '#ffffff' }}>
             <Container maxWidth="lg">
                 {/* Header Section */}
-                <Box textAlign="start" mb={10}>
+                <Box textAlign="start" mb={2}>
                     <Typography
                         variant="subtitle1"
                         sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: 2, mb: 1 }}
@@ -143,10 +143,15 @@ const GetStartedSection = ({ data }: any) => {
                 </Box>
 
             </Container >
-            <Container maxWidth="lg" sx={{ mt: 12 }} className='flex gap-4'>
-                {data?.slice(0, 4).map((sec: ISecretary) => (
-                    <SecretaryCard key={sec.id} data={sec} />
-                ))}
+            {/* Cards Grid - FIXED */}
+            <Container maxWidth="lg" sx={{ mt: 12 }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {data?.map((specialist: Specialist) => (
+                        <div key={specialist.slug} className="h-full">
+                            <SpecialistCard data={specialist} />
+                        </div>
+                    ))}
+                </div>
             </Container>
         </Box >
     );

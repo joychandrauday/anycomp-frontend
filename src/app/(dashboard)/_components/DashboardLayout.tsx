@@ -34,6 +34,8 @@ import {
     AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const drawerWidth = 240;
 const collapsedDrawerWidth = 70;
@@ -69,7 +71,7 @@ export default function DashboardLayout({
     const mainMenuItems = {
         super_admin: [
             { text: "Admin Home", icon: <AdminIcon />, path: "/dashboard" },
-            { text: "Specialists", icon: <SpecialistIcon />, path: "/dashboard/specialists" },
+            { text: "Service", icon: <SpecialistIcon />, path: "/dashboard/service" },
             { text: "Clients", icon: <PeopleIcon />, path: "/dashboard/clients" },
             { text: "eSignature", icon: <SignatureIcon />, path: "/dashboard/esignature" },
         ],
@@ -154,7 +156,7 @@ export default function DashboardLayout({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }} onClick={handleProfileMenuOpen}>
                         <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
                             <Typography variant="subtitle2" sx={{ lineHeight: 1, fontWeight: 600 }}>{user.name}</Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                            <Typography variant="caption" color="text.primary" sx={{ textTransform: 'capitalize' }}>
                                 {user?.role && user?.role.replace('_', ' ')}
                             </Typography>
                         </Box>
@@ -211,7 +213,18 @@ export default function DashboardLayout({
                 <Box>
                     <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', px: [1] }}>
                         <Typography variant="h6" fontWeight="bold" color="primary">
-                            {open ? 'APP LOGO' : 'A'}
+                            {open ? <>
+                                <Link
+                                    href="/"
+                                    className="flex justify-between items-center gap-2">
+                                    <Image
+                                        src="/anycompicon.png"
+                                        alt="anycomp logo"
+                                        width={60}
+                                        height={30}
+                                    />AnyComp
+                                </Link>
+                            </> : 'A'}
                         </Typography>
                     </Toolbar>
                     <Divider />

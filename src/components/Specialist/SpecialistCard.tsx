@@ -14,9 +14,9 @@ const SpecialistCard: React.FC<SpecialistCardProps> = ({ data }) => {
         'https://res.cloudinary.com/dklikxmpm/image/upload/v1770313284/secretaries/banners/ql3n3d17sznhc5lvbbwr.jpg';
 
     // Handle missing user data
-    const userName = data?.user?.full_name || 'Unknown Secretary';
+    const userName = data?.assigned_secretary?.full_name || 'Unknown Secretary';
     const userInitial = userName?.charAt(0) || 'S';
-    const profileImage = data?.user?.profile_image;
+    const profileImage = data?.assigned_secretary?.profile_image;
     const description = data?.description || 'No description available.';
     const price = data?.final_price ? Number(data.final_price).toFixed(2) : '0.00';
 

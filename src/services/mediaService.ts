@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // services/companyService.ts
 import { apiFetch } from "@/lib/api";
 

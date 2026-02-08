@@ -16,6 +16,8 @@ export interface ISecretaryContact {
     emergency_contact?: string;
 }
 export interface ISecretary {
+    email: any;
+    full_name: any;
     id: string;
     registration_number: string;
     secretary_type: SecretaryType;

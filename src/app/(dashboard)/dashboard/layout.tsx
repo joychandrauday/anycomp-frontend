@@ -1,6 +1,6 @@
 'use client';
 
-import DashboardLayout from "./_components/DashboardLayout";
+import DashboardLayout from "../_components/DashboardLayout";
 import { useSession } from "next-auth/react";
 
 export default function RootDashboardLayout({

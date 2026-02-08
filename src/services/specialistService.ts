@@ -7,12 +7,23 @@ interface specialistResponse {
     data: Specialist[];
     total: number;
 }
+interface SingleSpecialistResponse {
+    data: Specialist;
+    total: number;
+}
+interface SearchSpecialistResponse {
+    data: {
+        data: Specialist[]
+    };
+    total: number;
+}
 
 export const specialistService = {
     getAll: () => apiFetch<specialistResponse>("/specialists"),
+    searchService: (q: string) => apiFetch<SearchSpecialistResponse>(`/specialists/service/search?q=${q}`),
     getAllAdmin: () => apiFetch<specialistResponse>("/specialists/admin"),
 
-    getById: (id: string) => apiFetch<Specialist>(`/specialists/${id}`, {
+    getBySlug: (slug: string) => apiFetch<SingleSpecialistResponse>(`/specialists/${slug}`, {
         next: { revalidate: 60 } // Specific override for this call
     }),
 
