@@ -14,6 +14,8 @@ export default async function DashboardPage() {
             return <AdminDashboard />;
         case "viewer":
             return <UserDashboard />;
+        case "secretary":
+            return <UserDashboard />;
         default:
             return <div>Unauthorized</div>;
     }

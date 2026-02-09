@@ -20,6 +20,7 @@ interface SearchSpecialistResponse {
 
 export const specialistService = {
     getAll: () => apiFetch<specialistResponse>("/specialists"),
+    getAllSecretary: () => apiFetch<specialistResponse>("/specialists/secretary/my"),
     searchService: (q: string) => apiFetch<SearchSpecialistResponse>(`/specialists/service/search?q=${q}`),
     getAllAdmin: () => apiFetch<specialistResponse>("/specialists/admin"),
 

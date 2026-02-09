@@ -21,7 +21,7 @@ type Service = {
 
 export default async function Services() {
     const specialists = await specialistService.getAll();
-    console.log(specialists.data);
+    console.log(specialists, 'hello');
     return (
         <Container sx={{ py: 12 }}>
             <Box textAlign="start" mb={2}>

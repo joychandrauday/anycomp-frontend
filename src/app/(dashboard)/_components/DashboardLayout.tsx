@@ -72,12 +72,17 @@ export default function DashboardLayout({
         super_admin: [
             { text: "Admin Home", icon: <AdminIcon />, path: "/dashboard" },
             { text: "Service", icon: <SpecialistIcon />, path: "/dashboard/service" },
+            { text: "Secretaries", icon: <SpecialistIcon />, path: "/dashboard/secretaries" },
             { text: "Clients", icon: <PeopleIcon />, path: "/dashboard/clients" },
             { text: "eSignature", icon: <SignatureIcon />, path: "/dashboard/esignature" },
         ],
         viewer: [
             { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
             { text: "Profile", icon: <PersonIcon />, path: "/dashboard/profile" },
+        ],
+        secretary: [
+            { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+            { text: "Service", icon: <SpecialistIcon />, path: "/dashboard/my-service" },
         ],
     };
 

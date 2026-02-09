@@ -30,7 +30,7 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 
 // Define user type
@@ -47,9 +47,16 @@ export default function Navbar() {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [notificationsAnchorEl, setNotificationsAnchorEl] = useState<null | HTMLElement>(null);
     const router = useRouter();
-
+    const pathname = usePathname();
     const { data: session } = useSession();
     const user = session?.user as unknown as User | null;
+
+    const hideNavbar =
+        pathname?.startsWith("/dashboard") ||
+        pathname?.startsWith("/admin/dashboard") ||
+        pathname?.startsWith("/secretary/dashboard");
+
+    if (hideNavbar) return null;
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();

@@ -66,6 +66,7 @@ export interface ISecretary {
     manager?: IUser;
     verified_by?: IUser;
     managed_companies?: any;
+    companyName: string;
     managed_specialists?: Specialist[];
 
     // Metadata
@@ -119,6 +120,7 @@ export interface Certification {
 
 export interface IUser {
     id: string;
+    avatar: string;
     email: string;
     full_name: string;
     phone_number?: string;

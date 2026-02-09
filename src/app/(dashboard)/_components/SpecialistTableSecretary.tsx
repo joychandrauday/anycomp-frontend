@@ -1,82 +1,97 @@
 "use client";
-import React, { useState, useMemo } from "react";
-import { Table, Input, Tabs, Tag, Popover, Button, message, Dropdown, MenuProps, ConfigProvider } from "antd";
-import { DownloadIcon, Edit, EllipsisVertical, Trash2, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { specialistService } from "@/services/specialistService";
+import React, { useState, useMemo, useEffect } from "react";
+import {
+    Table,
+    Input,
+    Tabs,
+    Tag,
+    Popover,
+    Button,
+    message,
+    Dropdown,
+    MenuProps,
+    ConfigProvider,
+    Empty,
+    Card,
+    Spin
+} from "antd";
+import {
+    DownloadIcon,
+    Edit,
+    EllipsisVertical,
+    Trash2,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    PlusCircle,
+    Search
+} from "lucide-react";
 import { Specialist } from "@/types/specialists";
-import { MultiStepEditDrawer } from "./MultiStepEditDrawer";
 import { useSession } from "next-auth/react";
-import { SearchOutlined } from "@mui/icons-material";
 
 interface SpecialistTableProps {
     initialData: Specialist[];
-    secretaries: any[]; // Adjust type as needed
 }
 
-export default function SpecialistTable({ initialData, secretaries }: SpecialistTableProps) {
+export default function SpecialistTableSecretary({ initialData = [] }: SpecialistTableProps) {
     const [data, setData] = useState<Specialist[]>(initialData);
     const [search, setSearch] = useState<string>("");
     const [activeTab, setActiveTab] = useState<string>("All");
     const [loadingId, setLoadingId] = useState<string | null>(null);
+    const [isClient, setIsClient] = useState(false);
     const { data: session } = useSession();
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
-    // Drawer States
-    const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-    const [selectedRecord, setSelectedRecord] = useState<Specialist | null>(null);
+
+    // Set isClient to true when component mounts (client-side only)
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     // --- Logic ---
     const filteredData = useMemo(() => {
+        if (!Array.isArray(data) || data.length === 0) return [];
+
         return data.filter((item) => {
-            const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
-            const matchesFilter =
-                activeTab === "All"
-                    ? true
-                    : activeTab === "Drafts"
-                        ? item.is_draft
-                        : !item.is_draft;
+            const matchesSearch = search ?
+                item.title?.toLowerCase().includes(search.toLowerCase()) :
+                true;
+
+            const matchesFilter = activeTab === "All" ?
+                true :
+                activeTab === "Drafts" ?
+                    item.is_draft :
+                    !item.is_draft;
+
             return matchesSearch && matchesFilter;
         });
     }, [search, activeTab, data]);
 
-    const handleEditClick = (record: Specialist) => {
-        setSelectedRecord(record);
-        setIsDrawerOpen(true);
-    };
+    // Check if data is empty or not provided
+    const isEmptyData = !Array.isArray(initialData) || initialData.length === 0;
+    const isEmptyFiltered = filteredData.length === 0;
 
-    const handleUpdate = async (id: string, values: Partial<Specialist>) => {
-        try {
-            // Using the service method
-            const response = await specialistService.update(id, values);
 
-            // Update local state so UI reflects changes
-            setData((prev) =>
-                prev.map((item) => (item.id === id ? { ...item, ...values } : item))
-            );
-
-            return response;
-        } catch (error: any) {
-            message.error(error.message || "Update failed. Please try again.");
-            console.error(error);
-            throw error;
-        }
-    };
 
     // Handle publish/unpublish status change
     const handlePublishStatusChange = async (id: string, shouldPublish: boolean) => {
+        if (!isClient || !session?.accessToken) {
+            message.error("Please wait for session to load");
+            return;
+        }
+
         setLoadingId(id);
         try {
             const url = shouldPublish
                 ? `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/specialists/${id}/publish`
                 : `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/specialists/${id}/unpublish`;
 
-            const method = "PATCH";
             const response = await fetch(url, {
-                method,
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session?.accessToken}`
+                    "Authorization": `Bearer ${session.accessToken}`
                 },
             });
 
@@ -86,7 +101,6 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
 
             const result = await response.json();
 
-            // Update local state
             setData((prev) =>
                 prev.map((item) =>
                     item.id === id ? { ...item, is_draft: !shouldPublish } : item
@@ -105,16 +119,20 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
 
     // Handle verification status change
     const handleVerificationStatusChange = async (id: string, status: "verified" | "in_review") => {
+        if (!isClient || !session?.accessToken) {
+            message.error("Please wait for session to load");
+            return;
+        }
+
         setLoadingId(id);
         try {
             const url = `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/specialists/${id}/verify`;
-            const method = "PATCH";
             const body = JSON.stringify({ status });
             const response = await fetch(url, {
-                method,
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session?.accessToken}`
+                    "Authorization": `Bearer ${session.accessToken}`
                 },
                 body
             });
@@ -125,7 +143,6 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
 
             const result = await response.json();
 
-            // Update local state
             setData((prev) =>
                 prev.map((item) =>
                     item.id === id ? { ...item, verification_status: status } : item
@@ -146,7 +163,7 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
     const ActionMenu = ({ record }: { record: Specialist }) => (
         <div className="flex flex-col gap-1 p-1 bg-transparent">
             <button
-                onClick={() => handleEditClick(record)}
+                // onClick={() => handleEditClick(record)}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors w-full"
             >
                 <Edit size={14} /> Edit
@@ -166,13 +183,13 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
             {
                 key: 'publish',
                 label: 'Publish',
-                disabled: !record.is_draft || loadingId === record.id,
+                disabled: !record.is_draft || loadingId === record.id || !isClient,
                 onClick: () => handlePublishStatusChange(record.id, true),
             },
             {
                 key: 'unpublish',
                 label: 'Unpublish',
-                disabled: record.is_draft || loadingId === record.id,
+                disabled: record.is_draft || loadingId === record.id || !isClient,
                 onClick: () => handlePublishStatusChange(record.id, false),
             },
         ],
@@ -185,13 +202,13 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
             {
                 key: 'verify',
                 label: 'Verify',
-                disabled: record.verification_status === "verified" || loadingId === record.id,
+                disabled: record.verification_status === "verified" || loadingId === record.id || !isClient,
                 onClick: () => handleVerificationStatusChange(record.id, "verified"),
             },
             {
                 key: 'unverify',
                 label: 'Unverify',
-                disabled: record.verification_status !== "verified" || loadingId === record.id,
+                disabled: record.verification_status !== "verified" || loadingId === record.id || !isClient,
                 onClick: () => handleVerificationStatusChange(record.id, "in_review"),
             },
         ],
@@ -226,7 +243,7 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
                     menu={getVerificationStatusMenu(record)}
                     trigger={['click']}
                     placement="bottom"
-                    disabled={loadingId === record.id}
+                    disabled={loadingId === record.id || !isClient}
                 >
                     <Button
                         type="text"
@@ -235,11 +252,11 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
                     >
                         <Tag
                             className="rounded-full px-3 border-none cursor-pointer"
-                            color={status === "verified" ? "green" : "red-inverse"}
+                            color={status === "verified" ? "green" : "red"}
                         >
                             {status === "verified" ? "Verified" : "Not Verified"}
                         </Tag>
-                        <ChevronDown size={12} className="text-gray-400" />
+                        {isClient && <ChevronDown size={12} className="text-gray-400" />}
                     </Button>
                 </Dropdown>
             ),
@@ -253,7 +270,7 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
                     menu={getPublishStatusMenu(record)}
                     trigger={['click']}
                     placement="bottom"
-                    disabled={loadingId === record.id}
+                    disabled={loadingId === record.id || !isClient}
                 >
                     <Button
                         type="text"
@@ -262,23 +279,13 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
                     >
                         <Tag
                             className="rounded-full px-3 border-none cursor-pointer"
-                            color={isDraft ? "blue-inverse" : "green"}
+                            color={isDraft ? "blue" : "green"}
                         >
                             {isDraft ? "Not Published" : "Published"}
                         </Tag>
-                        <ChevronDown size={12} className="text-gray-400" />
+                        {isClient && <ChevronDown size={12} className="text-gray-400" />}
                     </Button>
                 </Dropdown>
-            ),
-        },
-        {
-            title: "Assigned Secretary",
-            dataIndex: "assigned_secretary",
-            key: "assigned_secretary",
-            render: (assigned_secretary: any) => (
-                <span className="text-gray-400">
-                    {assigned_secretary?.full_name || "None Assigned"}
-                </span>
             ),
         },
         {
@@ -288,15 +295,17 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
             render: (_: any, record: Specialist) => (
                 <Popover
                     content={<ActionMenu record={record} />}
-                    trigger="click"
+                    trigger={isClient ? "click" : []}
                     placement="bottomRight"
                     overlayClassName="action-popover"
                 >
+
                     <Button
                         type="text"
                         shape="circle"
                         icon={<EllipsisVertical size={18} />}
                         className="flex items-center justify-center hover:bg-gray-100"
+                        disabled={!isClient}
                     />
                 </Popover>
             ),
@@ -318,14 +327,14 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
             if (type === 'prev') {
                 return (
                     <button className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors">
-                        <ChevronLeft size={16} />
+                        {isClient && <ChevronLeft size={16} />}
                     </button>
                 );
             }
             if (type === 'next') {
                 return (
                     <button className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors">
-                        <ChevronRight size={16} />
+                        {isClient && <ChevronRight size={16} />}
                     </button>
                 );
             }
@@ -339,11 +348,136 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
             return originalElement;
         },
         onChange: (page: number, pageSize: number) => {
-            setCurrentPage(page);
-            setPageSize(pageSize);
+            if (isClient) {
+                setCurrentPage(page);
+                setPageSize(pageSize);
+            }
         },
         pageSizeOptions: ['5', '10', '20', '50'],
     };
+
+    // Custom empty state component
+    const CustomEmpty = () => {
+        if (!isClient) {
+            return (
+                <Card className="border-dashed border-2 border-gray-200 bg-gray-50">
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <Spin size="large" />
+                        <p className="mt-4 text-gray-600">Loading specialists...</p>
+                    </div>
+                </Card>
+            );
+        }
+
+        if (isEmptyData) {
+            return (
+                <Card className="border-dashed border-2 border-gray-200 bg-gray-50">
+                    <Empty
+                        image={<PlusCircle className="w-16 h-16 text-gray-300 mx-auto" />}
+                        description={
+                            <div className="space-y-4">
+                                <p className="text-lg font-semibold text-gray-700">No Specialists Found</p>
+                                <p className="text-gray-500 max-w-md mx-auto">
+                                    You haven't added any specialists yet. Start by creating your first specialist service.
+                                </p>
+                            </div>
+                        }
+                    >
+                        <Button
+                            type="primary"
+                            icon={<PlusCircle size={16} />}
+                            className="bg-[#00204E] hover:bg-blue-900"
+                        >
+                            Create First Specialist
+                        </Button>
+                    </Empty>
+                </Card>
+            );
+        }
+
+        if (search && isEmptyFiltered) {
+            return (
+                <Card className="border-dashed border-2 border-gray-200 bg-gray-50">
+                    <Empty
+                        image={<Search className="w-16 h-16 text-gray-300 mx-auto" />}
+                        description={
+                            <div className="space-y-4">
+                                <p className="text-lg font-semibold text-gray-700">No Matching Results</p>
+                                <p className="text-gray-500 max-w-md mx-auto">
+                                    No specialists found matching "{search}". Try a different search term or clear the search.
+                                </p>
+                            </div>
+                        }
+                    >
+                        <Button
+                            onClick={() => setSearch("")}
+                            type="default"
+                        >
+                            Clear Search
+                        </Button>
+                    </Empty>
+                </Card>
+            );
+        }
+
+        if (isEmptyFiltered && activeTab !== "All") {
+            return (
+                <Card className="border-dashed border-2 border-gray-200 bg-gray-50">
+                    <Empty
+                        description={
+                            <div className="space-y-4">
+                                <p className="text-lg font-semibold text-gray-700">
+                                    No {activeTab === "Published" ? "Published" : "Draft"} Specialists
+                                </p>
+                                <p className="text-gray-500 max-w-md mx-auto">
+                                    {activeTab === "Published"
+                                        ? "You don't have any published specialists yet. Publish a draft or create a new one."
+                                        : "You don't have any draft specialists. Create a new one or check your published specialists."}
+                                </p>
+                            </div>
+                        }
+                    >
+                        <Button
+                            type={activeTab === "Published" ? "default" : "primary"}
+                            onClick={() => activeTab === "Published" ? setActiveTab("Drafts") : setActiveTab("Published")}
+                        >
+                            View {activeTab === "Published" ? "Drafts" : "Published"} Specialists
+                        </Button>
+                    </Empty>
+                </Card>
+            );
+        }
+
+        return null;
+    };
+
+    // Don't render interactive elements until client-side
+    if (!isClient) {
+        return (
+            <div className="w-full space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">
+                    <div className="h-10 w-48 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+
+                <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="w-full md:w-1/3">
+                        <div className="h-9 bg-gray-200 rounded-lg animate-pulse"></div>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="w-32 h-9 bg-gray-200 rounded-lg animate-pulse"></div>
+                        <div className="w-32 h-9 bg-gray-200 rounded-lg animate-pulse"></div>
+                    </div>
+                </div>
+
+                <Card>
+                    <div className="py-20">
+                        <Spin size="large" className="mx-auto block" />
+                        <p className="text-center mt-4 text-gray-600">Loading specialists table...</p>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <ConfigProvider
@@ -371,60 +505,71 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">
                     <Tabs
                         activeKey={activeTab}
-                        onChange={setActiveTab}
+                        onChange={(key) => {
+                            if (isClient) setActiveTab(key);
+                        }}
                         items={[
-                            { key: "All", label: `All Specialists` },
-                            { key: "Published", label: `Published` },
-                            { key: "Drafts", label: `Drafts` },
+                            {
+                                key: "All",
+                                label: `All Specialists (${data.length})`
+                            },
+                            {
+                                key: "Published",
+                                label: `Published (${data.filter(item => !item.is_draft).length})`
+                            },
+                            {
+                                key: "Drafts",
+                                label: `Drafts (${data.filter(item => item.is_draft).length})`
+                            },
                         ]}
                         className="custom-table-tabs"
                         style={{ marginBottom: -1 }}
                     />
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="w-full md:w-1/3">
                         <Input
                             placeholder="Search by name..."
-                            prefix={<SearchOutlined className="text-gray-400" />}
+                            prefix={<Search className="text-gray-400" size={16} />}
                             className="h-9 rounded-lg"
-                            onChange={(e) => setSearch(e.target.value)}
+                            value={search}
+                            onChange={(e) => {
+                                if (isClient) setSearch(e.target.value);
+                            }}
                             allowClear
                         />
                     </div>
                     <div className="flex gap-4">
-                        <button className="bg-[#00204E] text-white px-4 py-2 cursor-pointer hover:bg-blue-900 transition rounded-none"
-                            onClick={() => window.location.replace('/dashboard/service/create')}
-                        >
-                            + Create
+                        <button className="bg-[#00204E] text-white px-4 py-2 hover:bg-blue-900 transition rounded-lg flex items-center">
+                            <PlusCircle size={16} className="mr-2" /> Create New
                         </button>
-                        <button className="bg-black text-white px-4 py-2 hover:bg-gray-800 transition flex items-center rounded-none">
-                            <DownloadIcon size={16} className="mr-2" /> Create Export
+                        <button className="bg-black text-white px-4 py-2 hover:bg-gray-800 transition flex items-center rounded-lg">
+                            <DownloadIcon size={16} className="mr-2" /> Export
                         </button>
                     </div>
                 </div>
 
-                <Table
-                    columns={columns}
-                    dataSource={filteredData}
-                    rowKey="id"
-                    className="antd-transparent-table"
-                    pagination={paginationConfig}
-                    onChange={(pagination) => {
-                        if (pagination.current) setCurrentPage(pagination.current);
-                        if (pagination.pageSize) setPageSize(pagination.pageSize);
-                    }}
-                />
-
-                {/* Use the new MultiStepEditDrawer component */}
-                <MultiStepEditDrawer
-                    isOpen={isDrawerOpen}
-                    onClose={() => setIsDrawerOpen(false)}
-                    record={selectedRecord}
-                    secretaries={secretaries}
-                    onUpdate={handleUpdate}
-                />
-
+                {isEmptyFiltered ? (
+                    <CustomEmpty />
+                ) : (
+                    <Table
+                        columns={columns}
+                        dataSource={filteredData}
+                        rowKey="id"
+                        className="antd-transparent-table"
+                        pagination={paginationConfig}
+                        onChange={(pagination) => {
+                            if (isClient) {
+                                if (pagination.current) setCurrentPage(pagination.current);
+                                if (pagination.pageSize) setPageSize(pagination.pageSize);
+                            }
+                        }}
+                        locale={{
+                            emptyText: <CustomEmpty />
+                        }}
+                    />
+                )}
 
                 <style jsx global>{`
                     .antd-transparent-table .ant-table { 
@@ -626,6 +771,21 @@ export default function SpecialistTable({ initialData, secretaries }: Specialist
                     
                     .ant-select-item-option-selected {
                         background-color: #f0f9ff !important;
+                    }
+                    
+                    /* Empty state styles */
+                    .ant-empty {
+                        padding: 40px 0 !important;
+                    }
+                    
+                    .ant-empty-image {
+                        margin-bottom: 16px !important;
+                    }
+                    
+                    .ant-empty-description {
+                        color: #6b7280 !important;
+                        font-size: 14px !important;
+                        line-height: 1.5 !important;
                     }
                 `}</style>
             </div>

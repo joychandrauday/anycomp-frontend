@@ -18,6 +18,7 @@ const SpecialistCard: React.FC<SpecialistCardProps> = ({ data }) => {
     const userInitial = userName?.charAt(0) || 'S';
     const profileImage = data?.assigned_secretary?.profile_image;
     const description = data?.description || 'No description available.';
+    const title = data?.title || 'No description available.';
     const price = data?.final_price ? Number(data.final_price).toFixed(2) : '0.00';
 
     return (
@@ -64,6 +65,10 @@ const SpecialistCard: React.FC<SpecialistCardProps> = ({ data }) => {
                     </div>
                 </div>
 
+                {/* title */}
+                <p className="text-sm text-gray-600 line-clamp-3 mt-2">
+                    {title}
+                </p>
                 {/* Description */}
                 <p className="text-sm text-gray-600 line-clamp-3 mt-2">
                     {description}
